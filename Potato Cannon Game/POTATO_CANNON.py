@@ -28,7 +28,7 @@ PLAYER_RADIUS    = 8
 WALL_THRESH = 40
 FPS = 60
 
-
+# test
 def ensure_assets():
     os.makedirs("assets", exist_ok=True)
 
