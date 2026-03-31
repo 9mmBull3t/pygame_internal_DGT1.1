@@ -298,41 +298,131 @@ def draw_hud(surface, p1, p2, font):
     pygame.draw.line(surface, (70,70,70), (0, hy), (WIN_W, hy), 2)
     pygame.draw.rect(surface, (100,20,20), (20, hy+8, 160, 18))
     pygame.draw.rect(surface, (240,70,70), (20, hy+8, int(160*max(p1.hp,0)/100), 18))
-    surface.blit(font.render(f"P1  {p1.hp}/100", True, (255,255,255)), (20, hy+30))
+    surface.blit(font.render(f"{p1.name}  {p1.hp}/100", True, (255,255,255)), (20, hy+30))
     bx2 = WIN_W - 180
     pygame.draw.rect(surface, (20,40,120), (bx2, hy+8, 160, 18))
     w2 = int(160 * max(p2.hp,0) / 100)
     pygame.draw.rect(surface, (60,100,230), (bx2 + 160 - w2, hy+8, w2, 18))
-    surface.blit(font.render(f"P2  {p2.hp}/100", True, (255,255,255)), (bx2, hy+30))
+    surface.blit(font.render(f"{p2.name}  {p2.hp}/100", True, (255,255,255)), (bx2, hy+30))
     tip = font.render(
         "P1: WASD | Q/E cannon | SPACE fire      P2: Arrows | N/M cannon | ENTER fire",
         True, (110,110,110))
     surface.blit(tip, tip.get_rect(center=(WIN_W//2, hy+42)))
 
 
-def draw_game_over(surface, winner, font_big, font_small):
+def draw_game_over(surface, winner, font_big, font_small, p1_name="Player 1", p2_name="Player 2"):
     overlay = pygame.Surface((WIN_W, WIN_H - 60), pygame.SRCALPHA)
     overlay.fill((0, 0, 0, 170))
     surface.blit(overlay, (0, 0))
     if winner == 0:
         msg, col = "Draw!", (255,215,0)
     elif winner == 1:
-        msg, col = "Player 1 Wins!", (230,60,60)
+        msg, col = f"{p1_name} Wins!", (230,60,60)
     else:
-        msg, col = "Player 2 Wins!", (60,100,230)
+        msg, col = f"{p2_name} Wins!", (60,100,230)
     txt = font_big.render(msg, True, col)
     surface.blit(txt, txt.get_rect(center=(WIN_W//2, WIN_H//2 - 40)))
     sub = font_small.render("R = restart   ESC = quit", True, (200,200,200))
     surface.blit(sub, sub.get_rect(center=(WIN_W//2, WIN_H//2 + 20)))
 
 
-def make_players(col_map):
+
+def start_screen(screen, clock):
+    """Show name-entry screen. Returns (p1_name, p2_name)."""
+    font_title  = pygame.font.SysFont("consolas", 48, bold=True)
+    font_label  = pygame.font.SysFont("consolas", 22, bold=True)
+    font_input  = pygame.font.SysFont("consolas", 26)
+    font_hint   = pygame.font.SysFont("consolas", 14)
+
+    names   = ["Player 1", "Player 2"]
+    active  = None   # which box is focused: 0, 1, or None
+    colors  = [(200, 40,  40),  (40,  80, 200)]
+    box_rects = [
+        pygame.Rect(WIN_W // 2 - 180, WIN_H // 2 - 40, 360, 44),
+        pygame.Rect(WIN_W // 2 - 180, WIN_H // 2 + 60, 360, 44),
+    ]
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit(); import sys; sys.exit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    pygame.quit(); import sys; sys.exit()
+                if event.key == pygame.K_RETURN or event.key == pygame.K_KP_ENTER:
+                    # Move focus to next box or start game
+                    if active == 0:
+                        active = 1
+                    else:
+                        return names[0] or "Player 1", names[1] or "Player 2"
+                if event.key == pygame.K_TAB:
+                    active = 1 if active == 0 else 0
+                if active is not None:
+                    if event.key == pygame.K_BACKSPACE:
+                        names[active] = names[active][:-1]
+                    elif event.unicode.isprintable() and len(names[active]) < 16:
+                        names[active] += event.unicode
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                active = None
+                for i, rect in enumerate(box_rects):
+                    if rect.collidepoint(event.pos):
+                        active = i
+                        break
+
+        # ── draw ────────────────────────────────────────────────────────────
+        screen.fill((15, 15, 20))
+
+        # Title
+        title = font_title.render("POTATO CANNON", True, (230, 180, 40))
+        screen.blit(title, title.get_rect(center=(WIN_W // 2, WIN_H // 2 - 160)))
+        sub = font_hint.render("2-Player Top-Down Artillery", True, (130, 130, 130))
+        screen.blit(sub, sub.get_rect(center=(WIN_W // 2, WIN_H // 2 - 110)))
+
+        labels = ["RED PLAYER NAME", "BLUE PLAYER NAME"]
+        for i, (rect, col, label) in enumerate(zip(box_rects, colors, labels)):
+            # Label above box
+            lbl = font_label.render(label, True, col)
+            screen.blit(lbl, (rect.x, rect.y - 28))
+
+            # Box background
+            border_col = (255, 255, 255) if active == i else (80, 80, 80)
+            pygame.draw.rect(screen, (30, 30, 35), rect, border_radius=6)
+            pygame.draw.rect(screen, border_col, rect, 2, border_radius=6)
+
+            # Text inside box
+            display = names[i]
+            if active == i and (pygame.time.get_ticks() // 500) % 2 == 0:
+                display += "|"   # blinking cursor
+            txt = font_input.render(display, True, (240, 240, 240))
+            screen.blit(txt, (rect.x + 10, rect.y + 9))
+
+        # Start hint
+        hint = font_hint.render("Click a box to select  |  ENTER to confirm  |  TAB to switch", True, (90, 90, 90))
+        screen.blit(hint, hint.get_rect(center=(WIN_W // 2, WIN_H // 2 + 140)))
+
+        start_btn = pygame.Rect(WIN_W // 2 - 100, WIN_H // 2 + 170, 200, 44)
+        pygame.draw.rect(screen, (50, 130, 50), start_btn, border_radius=8)
+        pygame.draw.rect(screen, (100, 220, 100), start_btn, 2, border_radius=8)
+        btn_txt = font_label.render("START GAME", True, (255, 255, 255))
+        screen.blit(btn_txt, btn_txt.get_rect(center=start_btn.center))
+
+        # Start button click
+        if pygame.mouse.get_pressed()[0]:
+            if start_btn.collidepoint(pygame.mouse.get_pos()):
+                return names[0] or "Player 1", names[1] or "Player 2"
+
+        pygame.display.flip()
+        clock.tick(60)
+
+def make_players(col_map, name1="Player 1", name2="Player 2"):
     c1 = dict(up=pygame.K_w, down=pygame.K_s, left=pygame.K_a, right=pygame.K_d,
               cannon_left=pygame.K_q, cannon_right=pygame.K_e, fire=pygame.K_SPACE)
     c2 = dict(up=pygame.K_UP, down=pygame.K_DOWN, left=pygame.K_LEFT, right=pygame.K_RIGHT,
               cannon_left=pygame.K_n, cannon_right=pygame.K_m, fire=pygame.K_RETURN)
     p1 = Player("assets/RedPlayer.png",  (20, 20),   c1, col_map, player_id=1)
     p2 = Player("assets/BluePlayer.png", (236, 236), c2, col_map, player_id=2)
+    p1.name = name1
+    p2.name = name2
     return p1, p2
 
 
@@ -358,7 +448,15 @@ def run():
         explosions = pygame.sprite.Group()
         return p1, p2, bullets, explosions
 
-    p1, p2, bullets, explosions = new_game()
+    p1_name, p2_name = start_screen(screen, clock)
+
+    def new_game_named():
+        p1, p2 = make_players(col_map, p1_name, p2_name)
+        bullets    = pygame.sprite.Group()
+        explosions = pygame.sprite.Group()
+        return p1, p2, bullets, explosions
+
+    p1, p2, bullets, explosions = new_game_named()
     game_over = False
     winner    = None
 
@@ -372,7 +470,7 @@ def run():
                 if event.key == pygame.K_ESCAPE:
                     pygame.quit(); sys.exit()
                 if event.key == pygame.K_r:
-                    p1, p2, bullets, explosions = new_game()
+                    p1, p2, bullets, explosions = new_game_named()
                     game_over = False; winner = None
 
         if not game_over:
@@ -421,7 +519,7 @@ def run():
         p2.draw(screen)
         draw_hud(screen, p1, p2, font_small)
         if game_over:
-            draw_game_over(screen, winner, font_big, font_small)
+            draw_game_over(screen, winner, font_big, font_small, p1.name, p2.name)
 
         pygame.display.flip()
         clock.tick(FPS)
