@@ -28,7 +28,7 @@ PLAYER_RADIUS    = 8
 WALL_THRESH = 40
 FPS = 60
 
-# test
+
 def ensure_assets():
     os.makedirs("assets", exist_ok=True)
 
@@ -142,6 +142,20 @@ class Player(pygame.sprite.Sprite):
         self.image = pygame.Surface((sw, sw), pygame.SRCALPHA)
         self.rect  = self.image.get_rect()
 
+        # Build pixel-perfect hitbox from the body sprite's opaque pixels.
+        # Store as map-space offsets from the player centre so rotation doesn't matter
+        # (body is always drawn upright). Only sample every 2nd pixel for speed.
+        self._pixel_offsets = []
+        half = sw // 2
+        for py in range(0, sw, 2):
+            for px in range(0, sw, 2):
+                _, _, _, a = self.body_img.get_at((px, py))
+                if a > 64:
+                    # Convert screen-pixel offset to map-space offset
+                    ox = (px - half) / SCALE
+                    oy = (py - half) / SCALE
+                    self._pixel_offsets.append((ox, oy))
+
     def update(self, keys, bullets, other_player):
         if not self.alive:
             return
@@ -200,6 +214,13 @@ class Player(pygame.sprite.Sprite):
                 return True
         return False
 
+    def bullet_hits(self, bpos):
+        """Pixel-perfect check: is bullet map-pos inside any opaque body pixel?"""
+        for ox, oy in self._pixel_offsets:
+            if abs(bpos.x - (self.pos.x + ox)) < 1.0 and abs(bpos.y - (self.pos.y + oy)) < 1.0:
+                return True
+        return False
+
     def take_damage(self, amount):
         self.hp = max(0, self.hp - amount)
         if self.hp <= 0:
@@ -221,7 +242,7 @@ class Potato(pygame.sprite.Sprite):
     def __init__(self, pos, angle_rad, col_map, owner_id):
         super().__init__()
         raw = pygame.image.load("assets/Potato.png").convert_alpha()
-        base = pygame.transform.scale(raw, (32, 32))
+        base = pygame.transform.scale(raw, (16, 16))
         self.image    = pygame.transform.rotate(base, -math.degrees(angle_rad))
         self.rect     = self.image.get_rect()
         self.pos      = Vector2(pos)
@@ -373,7 +394,7 @@ def run():
                 for player in (p1, p2):
                     if not player.alive or bullet.owner_id == player.player_id:
                         continue
-                    if bullet.pos.distance_to(player.pos) <= PLAYER_RADIUS:
+                    if player.bullet_hits(bullet.pos):
                         exp = Explosion(player.pos)
                         explosions.add(exp)
                         player.take_damage(EXPLOSION_DAMAGE)
