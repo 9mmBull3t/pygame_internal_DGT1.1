@@ -131,7 +131,7 @@ class Player(pygame.sprite.Sprite):
         self.body_img   = pygame.transform.scale(raw_body,   (sw, sw))
         self.cannon_img = pygame.transform.rotate(pygame.transform.scale(raw_cannon, (sw, sw)), -90)
 
-        # Find a guaranteed open spawn using the collision map itself
+        # find a guaranteed open spawn using the collision map itself
         sx, sy = col_map.find_open_spot(pos[0], pos[1], PLAYER_RADIUS)
         self.pos        = Vector2(sx, sy)
         self.cannon_ang = 0.0
@@ -145,20 +145,19 @@ class Player(pygame.sprite.Sprite):
         self.image = pygame.Surface((sw, sw), pygame.SRCALPHA)
         self.rect  = self.image.get_rect()
 
-        # Build pixel-perfect hitbox from the body sprite's opaque pixels.
-        # Store as map-space offsets from the player centre so rotation doesn't matter
-        # (body is always drawn upright). Only sample every 2nd pixel for speed.
+        '''this builds a hitbox where the players coloured pixels are
+         so that the hitbox is more accurate to what the player sees '''
         self._pixel_offsets = []
         half = sw // 2
         for py in range(0, sw, 2):
             for px in range(0, sw, 2):
                 _, _, _, a = self.body_img.get_at((px, py))
                 if a > 64:
-                    # Convert screen-pixel offset to map-space offset
+                    #convert screen pixel offset to map space offset
                     ox = (px - half) / SCALE
                     oy = (py - half) / SCALE
                     self._pixel_offsets.append((ox, oy))
-
+    
     def update(self, keys, bullets, other_player):
         if not self.alive:
             return
