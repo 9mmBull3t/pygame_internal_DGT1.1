@@ -85,7 +85,9 @@ def ensure_assets():
     _make_potato("assets/Potato.png")
     _make_explosion("assets/Explosion.png")
 
-
+'''
+this following code handles the map collisions by essentially scanning the map sprite and making 
+black pixels 'solid' (players collide against) again the defined functons are self explanatory'''
 class CollisionMap:
     def __init__(self, surface):
         self._w = surface.get_width()
@@ -104,7 +106,7 @@ class CollisionMap:
         return bool(self._grid[iy * self._w + ix])
 
     def find_open_spot(self, hint_x, hint_y, radius):
-        """Scan outward from hint until we find a spot with no wall probes."""
+        #Scan outward from hint until it finds a spot with no wall probes
         r2 = radius * 0.707
         probes = [(radius,0),(-radius,0),(0,radius),(0,-radius),
                   (r2,r2),(-r2,r2),(r2,-r2),(-r2,-r2)]
