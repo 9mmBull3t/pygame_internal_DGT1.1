@@ -29,7 +29,7 @@ WALL_THRESH = 40
 FPS = 60
 
 
-
+#defined funtions have pretty self explanatory names eg. _make_map
 def ensure_assets():
     os.makedirs("assets", exist_ok=True)
 
@@ -78,7 +78,7 @@ def ensure_assets():
             ey = int(24 + 22*math.sin(math.radians(a)))
             pygame.draw.circle(surf, (255,255,100), (ex,ey), 3)
         pygame.save(surf, path)
-
+    #pulling all the assets (sprites and sprite sheets from the assets folder)
     _player_sheet("assets/RedPlayer.png",  (200,40,40),  (160,30,30))
     _player_sheet("assets/BluePlayer.png", (40,80,200),  (30,60,160))
     _make_map("assets/PotatoCannonMap.png")
