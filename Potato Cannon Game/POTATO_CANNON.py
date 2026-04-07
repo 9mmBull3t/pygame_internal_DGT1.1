@@ -1,8 +1,7 @@
 """
-Potato Cannon - 2 Player Top-Down Game
 Controls:
-  P1 (Red):   WASD move | Q/E rotate cannon | SPACE fire
-  P2 (Blue):  Arrows move | N/M rotate cannon | ENTER fire
+  P1 Red:   WASD move Q/E rotate cannon SPACE fire
+  P2 Blue:  Arrows move N/M rotate cannon ENTER fire
   R = restart   ESC = quit
 """
 
@@ -12,6 +11,7 @@ import sys
 import os
 from pygame.math import Vector2
 
+# this is where i set all the variables for thing like player speed map size damage ect
 MAP_W, MAP_H  = 256, 256
 SCALE         = 3
 WIN_W         = MAP_W * SCALE
@@ -27,6 +27,7 @@ EXPLOSION_DAMAGE = 35
 PLAYER_RADIUS    = 8
 WALL_THRESH = 40
 FPS = 60
+
 
 
 def ensure_assets():
