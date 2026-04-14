@@ -1,7 +1,13 @@
+'''
+Author: Fox Carnachan
+Date: Mar 2026
+Purpose: A simple game where two players move around and shoot each other with potato cannons
+'''
+
 """
 Controls:
-  P1 Red:   WASD move Q/E rotate cannon SPACE fire
-  P2 Blue:  Arrows move N/M rotate cannon ENTER fire
+  Player1 Red:   WASD move Q/E rotate cannon SPACE fire
+  Player2 Blue:  Arrows move N/M rotate cannon ENTER fire
   R = restart   ESC = quit
 """
 
@@ -197,7 +203,7 @@ class Player(pygame.sprite.Sprite):
         if keys[c["cannon_right"]]:
             self.cannon_ang = (self.cannon_ang + CANNON_SPEED) % 360
 
-        # Fire: simple cooldown gate, works on hold too
+        # Fire: simple cooldown gate works on hold too
         self.fire_timer = max(0, self.fire_timer - 1)
         if keys[c["fire"]] and self.fire_timer == 0:
             angle_rad = math.radians(self.cannon_ang)
